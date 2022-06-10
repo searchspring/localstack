@@ -57,4 +57,4 @@ api_states
 /integration/lambdas/golang/handler.zip
 /tests/integration/lambdas/golang/handler.zip
 tmp/
-tests/integration/reports/metric-report.json
+tests/integration/reports/*
