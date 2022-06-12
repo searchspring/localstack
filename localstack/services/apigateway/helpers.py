@@ -899,11 +899,12 @@ def create_invocation_headers(invocation_context: ApiInvocationContext) -> Dict[
     headers = invocation_context.headers
     integration = invocation_context.integration
 
-    for req_parameter_key, req_parameter_value in integration.get("requestParameters").items():
-        if header_name := list(
-            filter(None, req_parameter_key.split("integration.request.header."))
-        ):
-            headers.update({header_name[0]: req_parameter_value.replace("'", "")})
+    if request_parameters := integration.get("requestParameters"):
+        for req_parameter_key, req_parameter_value in request_parameters.items():
+            if header_name := list(
+                filter(None, req_parameter_key.split("integration.request.header."))
+            ):
+                headers.update({header_name[0]: req_parameter_value.replace("'", "")})
 
     return headers
 

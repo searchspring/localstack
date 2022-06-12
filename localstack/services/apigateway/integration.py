@@ -180,7 +180,7 @@ class RequestTemplates(Templates):
         LOG.info(
             "Method request body before transformations: %s", to_str(api_context.data_as_string())
         )
-        request_templates = api_context.integration.get("requestTemplates", {})
+        request_templates = api_context.integration.get("methodIntegration", {}).get("requestTemplates", {})
         template = request_templates.get(APPLICATION_JSON, {})
         if not template:
             return api_context.data_as_string()
@@ -203,7 +203,7 @@ class ResponseTemplates(Templates):
         # the body field in the template. We need to improve this by using the right source
         # depending on the type of templates.
         api_context.data = response._content
-        int_responses = integration.get("integrationResponses") or {}
+        int_responses = integration.get("methodIntegration", {}).get("integrationResponses") or {}
         if not int_responses:
             return response._content
         entries = list(int_responses.keys())

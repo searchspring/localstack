@@ -218,7 +218,7 @@ def apply_response_parameters(invocation_context: ApiInvocationContext):
     response = invocation_context.response
     integration = invocation_context.integration
 
-    int_responses = integration.get("integrationResponses") or {}
+    int_responses = integration.get("methodIntegration", {}).get("integrationResponses") or {}
     if not int_responses:
         return response
     entries = list(int_responses.keys())
@@ -232,7 +232,7 @@ def apply_response_parameters(invocation_context: ApiInvocationContext):
     for key, value in response_params.items():
         # TODO: add support for method.response.body, etc ...
         if str(key).lower().startswith("method.response.header."):
-            header_name = key[len("method.response.header.") :]
+            header_name = key[len("method.response.header."):]
             response.headers[header_name] = value.strip("'")
     return response
 
@@ -318,9 +318,10 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
     api_id = invocation_context.api_id
     stage = invocation_context.stage
     resource_path = invocation_context.resource_path
-    response_templates = invocation_context.response_templates
     integration = invocation_context.integration
     method_integration = integration.get("methodIntegration")
+    int_responses = method_integration.get("integrationResponses", {})
+    response_templates = int_responses.get("200", {}).get("responseTemplates", {})
     # extract integration type and path parameters
     relative_path, query_string_params = extract_query_string_params(path=invocation_path)
     integration_type_orig = (
