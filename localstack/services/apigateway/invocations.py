@@ -232,7 +232,7 @@ def apply_response_parameters(invocation_context: ApiInvocationContext):
     for key, value in response_params.items():
         # TODO: add support for method.response.body, etc ...
         if str(key).lower().startswith("method.response.header."):
-            header_name = key[len("method.response.header."):]
+            header_name = key[len("method.response.header.") :]
             response.headers[header_name] = value.strip("'")
     return response
 

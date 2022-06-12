@@ -180,7 +180,9 @@ class RequestTemplates(Templates):
         LOG.info(
             "Method request body before transformations: %s", to_str(api_context.data_as_string())
         )
-        request_templates = api_context.integration.get("methodIntegration", {}).get("requestTemplates", {})
+        request_templates = api_context.integration.get("methodIntegration", {}).get(
+            "requestTemplates", {}
+        )
         template = request_templates.get(APPLICATION_JSON, {})
         if not template:
             return api_context.data_as_string()

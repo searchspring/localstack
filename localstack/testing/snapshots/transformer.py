@@ -4,7 +4,7 @@ import re
 from re import Pattern
 from typing import Callable, Optional, Protocol
 
-# from jsonpath_ng.ext import parse
+from jsonpath_ng.ext import parse
 
 LOG = logging.getLogger(__name__)
 

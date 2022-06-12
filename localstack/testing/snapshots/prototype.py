@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 from botocore.response import StreamingBody
 from deepdiff import DeepDiff
-# from jsonpath_ng.ext import parse
+from jsonpath_ng.ext import parse
 
 from localstack.testing.snapshots.transformer import (
     KeyValueBasedTransformer,
