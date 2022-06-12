@@ -262,9 +262,11 @@ class TestApplyTemplate(unittest.TestCase):
         )
         api_context.response = requests_response({})
         api_context.integration = {
-            "requestTemplates": {
-                APPLICATION_JSON: "$util.escapeJavaScript($input.json('$.message'))"
-            },
+            "methodIntegration": {
+                "requestTemplates": {
+                    APPLICATION_JSON: "$util.escapeJavaScript($input.json('$.message'))"
+                }
+            }
         }
 
         rendered_request = RequestTemplates().render(api_context=api_context)
@@ -281,7 +283,9 @@ class TestApplyTemplate(unittest.TestCase):
         )
         api_context.integration = {
             "requestTemplates": {
-                APPLICATION_JSON: "$util.escapeJavaScript($input.json('$.message'))"
+                "requestTemplates": {
+                    APPLICATION_JSON: "$util.escapeJavaScript($input.json('$.message'))"
+                }
             },
         }
 
@@ -345,10 +349,12 @@ class TestTemplates:
             stage="local",
         )
         api_context.integration = {
-            "requestTemplates": {APPLICATION_JSON: RESPONSE_TEMPLATE},
-            "integrationResponses": {
-                "200": {"responseTemplates": {APPLICATION_JSON: RESPONSE_TEMPLATE}}
-            },
+            "methodIntegration": {
+                "requestTemplates": {APPLICATION_JSON: RESPONSE_TEMPLATE},
+                "integrationResponses": {
+                    "200": {"responseTemplates": {APPLICATION_JSON: RESPONSE_TEMPLATE}}
+                },
+            }
         }
         api_context.resource_path = "/{proxy+}"
         api_context.path_params = {"id": "bar"}
