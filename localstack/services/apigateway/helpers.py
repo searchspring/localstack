@@ -397,7 +397,7 @@ def extract_path_params(path: str, extracted_path: str) -> Dict[str, str]:
     return path_params
 
 
-def extract_query_string_params(path: str) -> Tuple[str, Dict[str, str]]:
+def extract_query_string_params(path: str) -> list[str, Dict[str, str]]:
     parsed_path = urlparse.urlparse(path)
     path = parsed_path.path
     parsed_query_string_params = urlparse.parse_qs(parsed_path.query)
@@ -892,6 +892,20 @@ def extract_api_id_from_hostname_in_url(hostname: str) -> str:
     """Extract API ID 'id123' from URLs like https://id123.execute-api.localhost.localstack.cloud:4566"""
     match = re.match(HOST_REGEX_EXECUTE_API, hostname)
     return match.group(1)
+
+
+# This need to be extended to handle mappings and not just literal values.
+def create_invocation_headers(invocation_context: ApiInvocationContext) -> Dict[str, Any]:
+    headers = invocation_context.headers
+    integration = invocation_context.integration
+
+    for req_parameter_key, req_parameter_value in integration.get("requestParameters").items():
+        if header_name := list(
+            filter(None, req_parameter_key.split("integration.request.header."))
+        ):
+            headers.update({header_name[0]: req_parameter_value.replace("'", "")})
+
+    return headers
 
 
 # TODO:

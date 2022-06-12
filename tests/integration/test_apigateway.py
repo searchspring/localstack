@@ -69,6 +69,8 @@ TEST_SWAGGER_FILE_JSON = os.path.join(THIS_FOLDER, "files", "swagger.json")
 TEST_SWAGGER_FILE_YAML = os.path.join(THIS_FOLDER, "files", "swagger.yaml")
 TEST_IMPORT_REST_API_FILE = os.path.join(THIS_FOLDER, "files", "pets.json")
 TEST_IMPORT_PETSTORE_SWAGGER = os.path.join(THIS_FOLDER, "files", "petstore-swagger.json")
+TEST_IMPORT_REST_API_ASYNC_LAMBDA = os.path.join(THIS_FOLDER, "files", "api_definition.yaml")
+
 
 ApiGatewayLambdaProxyIntegrationTestResult = namedtuple(
     "ApiGatewayLambdaProxyIntegrationTestResult",
@@ -489,6 +491,25 @@ class TestAPIGateway:
             self.TEST_LAMBDA_PROXY_BACKEND_ANY_METHOD_WITH_PATH_PARAM,
             self.API_PATH_LAMBDA_PROXY_BACKEND_ANY_METHOD_WITH_PATH_PARAM,
         )
+
+    def test_api_gateway_lambda_asynchronous_invocation(self, apigateway_client):
+        api_gateway_name = f"api_gateway_{short_uid()}"
+        rest_api_id = apigateway_client.create_rest_api(name=api_gateway_name)["id"]
+
+        fn_name = f"test-{short_uid()}"
+        testutil.create_lambda_function(
+            handler_file=TEST_LAMBDA_NODEJS, func_name=fn_name, runtime=LAMBDA_RUNTIME_NODEJS12X
+        )
+        lambda_arn = aws_stack.lambda_function_arn(fn_name)
+
+        spec_file = load_file(TEST_IMPORT_REST_API_ASYNC_LAMBDA)
+        spec_file = spec_file.replace("${lambda_invocation_arn}", lambda_arn)
+
+        apigateway_client.put_rest_api(restApiId=rest_api_id, body=spec_file, mode="overwrite")
+        url = path_based_url(api_id=rest_api_id, stage_name="latest", path="/wait/3")
+        result = requests.get(url)
+        assert result.status_code == 200
+        assert result.content == b""
 
     def test_api_gateway_authorizer_crud(self):
         apig = aws_stack.create_external_boto_client("apigateway")
