@@ -282,7 +282,7 @@ class TestApplyTemplate(unittest.TestCase):
             stage="local",
         )
         api_context.integration = {
-            "requestTemplates": {
+            "methodIntegration": {
                 "requestTemplates": {
                     APPLICATION_JSON: "$util.escapeJavaScript($input.json('$.message'))"
                 }
