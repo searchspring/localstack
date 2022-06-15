@@ -8,7 +8,6 @@ from typing import Dict, List, Optional
 
 from botocore.response import StreamingBody
 from deepdiff import DeepDiff
-from jsonpath_ng.ext import parse
 
 from localstack.testing.snapshots.transformer import (
     KeyValueBasedTransformer,
@@ -17,6 +16,9 @@ from localstack.testing.snapshots.transformer import (
     Transformer,
 )
 from localstack.testing.snapshots.transformer_utility import TransformerUtility
+
+# from jsonpath_ng.ext import parse
+
 
 LOG = logging.getLogger(__name__)
 

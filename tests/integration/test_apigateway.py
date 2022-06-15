@@ -206,7 +206,7 @@ class TestAPIGateway:
 
     def test_api_gateway_sqs_integration_with_event_source(self):
         # create target SQS stream
-        queue_name = "queue-%s" % short_uid()
+        queue_name = f"queue-{short_uid()}"
         queue_url = aws_stack.create_sqs_queue(queue_name)["QueueUrl"]
 
         # create API Gateway and connect it to the target queue
@@ -253,7 +253,7 @@ class TestAPIGateway:
 
     def test_api_gateway_sqs_integration(self):
         # create target SQS stream
-        queue_name = "queue-%s" % short_uid()
+        queue_name = f"queue-{short_uid()}"
         aws_stack.create_sqs_queue(queue_name)
 
         # create API Gateway and connect it to the target queue
@@ -558,7 +558,7 @@ class TestAPIGateway:
         apigw_client = aws_stack.create_external_boto_client("apigateway")
 
         # create Lambda function
-        lambda_name = "apigw-lambda-%s" % short_uid()
+        lambda_name = f"apigw-lambda-{short_uid()}"
         self.create_lambda_function(lambda_name)
         lambda_uri = aws_stack.lambda_function_arn(lambda_name)
         target_uri = aws_stack.apigateway_invocations_arn(lambda_uri)
@@ -616,7 +616,7 @@ class TestAPIGateway:
 
         # invoke the gateway endpoint
         url = path_based_url(api_id=api_id, stage_name=self.TEST_STAGE_NAME, path="/test")
-        response = requests.get("%s?param1=foobar" % url)
+        response = requests.get(f"{url}?param1=foobar")
         assert response.status_code < 400
         content = response.json()
         assert "GET" == content.get("httpMethod")
@@ -626,7 +626,7 @@ class TestAPIGateway:
 
         # additional checks from https://github.com/localstack/localstack/issues/5041
         # pass Signature param
-        response = requests.get("%s?param1=foobar&Signature=1" % url)
+        response = requests.get(f"{url}?param1=foobar&Signature=1")
         assert response.status_code == 200
         content = response.json()
         assert "GET" == content.get("httpMethod")
@@ -635,7 +635,7 @@ class TestAPIGateway:
         assert '{"param1": "foobar"}' == content.get("body")
 
         # pass TestSignature param as well
-        response = requests.get("%s?param1=foobar&TestSignature=1" % url)
+        response = requests.get(f"{url}?param1=foobar&TestSignature=1")
         assert response.status_code == 200
         content = response.json()
         assert "GET" == content.get("httpMethod")

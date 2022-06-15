@@ -218,7 +218,7 @@ def apply_response_parameters(invocation_context: ApiInvocationContext):
     response = invocation_context.response
     integration = invocation_context.integration
 
-    int_responses = integration.get("methodIntegration", {}).get("integrationResponses") or {}
+    int_responses = integration.get("integrationResponses") or {}
     if not int_responses:
         return response
     entries = list(int_responses.keys())
@@ -269,14 +269,14 @@ def invoke_rest_api(invocation_context: ApiInvocationContext):
         return make_error_response("Access denied - invalid API key", 403)
 
     resource_methods = resource.get("resourceMethods", {})
-    integration = resource_methods.get(method, {})
-    if not integration:
+    resource_method = resource_methods.get(method, {})
+    if not resource_method:
         # HttpMethod: '*'
         # ResourcePath: '/*' - produces 'X-AMAZON-APIGATEWAY-ANY-METHOD'
-        integration = resource_methods.get("ANY", {}) or resource_methods.get(
+        resource_method = resource_methods.get("ANY", {}) or resource_methods.get(
             "X-AMAZON-APIGATEWAY-ANY-METHOD", {}
         )
-    method_integration = integration.get("methodIntegration")
+    method_integration = resource_method.get("methodIntegration")
     if not method_integration:
         if method == "OPTIONS" and "Origin" in headers:
             # default to returning CORS headers if this is an OPTIONS request
@@ -288,7 +288,7 @@ def invoke_rest_api(invocation_context: ApiInvocationContext):
 
     # update fields in invocation context, then forward request to next handler
     invocation_context.resource_path = extracted_path
-    invocation_context.integration = integration
+    invocation_context.integration = method_integration
 
     return invoke_rest_api_integration(invocation_context)
 
@@ -319,16 +319,13 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
     stage = invocation_context.stage
     resource_path = invocation_context.resource_path
     integration = invocation_context.integration
-    method_integration = integration.get("methodIntegration")
-    int_responses = method_integration.get("integrationResponses", {})
-    response_templates = int_responses.get("200", {}).get("responseTemplates", {})
+    integration_response = integration.get("integrationResponses", {})
+    response_templates = integration_response.get("200", {}).get("responseTemplates", {})
     # extract integration type and path parameters
     relative_path, query_string_params = extract_query_string_params(path=invocation_path)
-    integration_type_orig = (
-        method_integration.get("type") or method_integration.get("integrationType") or ""
-    )
+    integration_type_orig = integration.get("type") or integration.get("integrationType") or ""
     integration_type = integration_type_orig.upper()
-    uri = method_integration.get("uri") or method_integration.get("integrationUri") or ""
+    uri = integration.get("uri") or integration.get("integrationUri") or ""
     # XXX we need replace the internal Authorization header with an Authorization header set from
     # the customer, even if it's empty that's what's expected in the integration.
     custom_auth_header = invocation_context.headers.pop(HEADER_LOCALSTACK_AUTHORIZATION, "")
@@ -461,7 +458,7 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
         elif "states:action/" in uri:
             action = uri.split("/")[-1]
 
-            if APPLICATION_JSON in method_integration.get("requestTemplates", {}):
+            if APPLICATION_JSON in integration.get("requestTemplates", {}):
                 request_templates = RequestTemplates()
                 payload = request_templates.render(invocation_context)
                 payload = json.loads(payload)
@@ -518,7 +515,7 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
             s3 = aws_stack.connect_to_service("s3")
             uri = apply_request_parameters(
                 uri,
-                integration=method_integration,
+                integration=integration,
                 path_params=path_params,
                 query_params=query_string_params,
             )
@@ -550,7 +547,7 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
 
         if method == "POST":
             if uri.startswith("arn:aws:apigateway:") and ":sqs:path" in uri:
-                template = method_integration["requestTemplates"][APPLICATION_JSON]
+                template = integration["requestTemplates"][APPLICATION_JSON]
                 account_id, queue = uri.split("/")[-2:]
                 region_name = uri.split(":")[3]
                 if "GetQueueUrl" in template or "CreateQueue" in template:
@@ -641,7 +638,7 @@ def invoke_rest_api_integration_backend(invocation_context: ApiInvocationContext
 
         uri = apply_request_parameters(
             uri,
-            integration=method_integration,
+            integration=integration,
             path_params=path_params,
             query_params=query_string_params,
         )
