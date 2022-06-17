@@ -6,8 +6,13 @@ from localstack.services.awslambda.lambda_utils import LAMBDA_RUNTIME_NODEJS12X
 from localstack.utils.aws import aws_stack
 from localstack.utils.strings import short_uid
 from localstack.utils.testutil import create_lambda_function
-from tests.integration.apigateway_fixtures import create_rest_api, create_rest_resource, \
-    create_rest_resource_method, create_rest_api_integration, api_invoke_url
+from tests.integration.apigateway_fixtures import (
+    api_invoke_url,
+    create_rest_api,
+    create_rest_api_integration,
+    create_rest_resource,
+    create_rest_resource_method,
+)
 from tests.integration.awslambda.test_lambda import TEST_LAMBDA_HELLO_WORLD
 
 
@@ -81,6 +86,7 @@ def test_lambda_aws_integration(apigateway_client):
     url = api_invoke_url(api_id=api_id, stage="local", path="/test")
     response = requests.get(url)
     assert response.content == b"Hello from Lambda"
+
 
 #
 # def test_aws_integration_dynamodb(apigateway_client):
