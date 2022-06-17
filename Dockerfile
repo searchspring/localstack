@@ -206,10 +206,6 @@ RUN TARGETARCH_SYNONYM=$([[ "$TARGETARCH" == "amd64" ]] && echo "x86_64" || echo
 # light: Stage which produces a final working localstack image (which does not contain some additional infrastructure like eleasticsearch - see "full" stage)
 FROM base-${IMAGE_TYPE}
 
-LABEL authors="LocalStack Contributors"
-LABEL maintainer="LocalStack Team (info@localstack.cloud)"
-LABEL description="LocalStack Docker image"
-
 # Copy the build dependencies
 COPY --from=builder /opt/code/localstack/ /opt/code/localstack/
 
@@ -217,38 +213,33 @@ COPY --from=builder /opt/code/localstack/ /opt/code/localstack/
 COPY --from=builder /usr/share/postgresql/11/extension /usr/share/postgresql/11/extension
 COPY --from=builder /usr/lib/postgresql/11/lib /usr/lib/postgresql/11/lib
 
-RUN mkdir -p /tmp/localstack && \
-    if [ -e /usr/bin/aws ]; then mv /usr/bin/aws /usr/bin/aws.bk; fi; ln -s /opt/code/localstack/.venv/bin/aws /usr/bin/aws
+ADD localstack/ localstack/
 
-# fix some permissions and create local user
-RUN mkdir -p /.npm && \
+ARG LOCALSTACK_PRE_RELEASE=1
+
+RUN mkdir -p /tmp/localstack && \
+    if [ -e /usr/bin/aws ]; then mv /usr/bin/aws /usr/bin/aws.bk; fi; ln -s /opt/code/localstack/.venv/bin/aws /usr/bin/aws && \
+    # fix some permissions and create local user
+    mkdir -p /.npm && \
     chmod 777 . && \
     chmod 755 /root && \
     chmod -R 777 /.npm && \
     chmod -R 777 /tmp/localstack && \
     useradd -ms /bin/bash localstack && \
-    ln -s `pwd` /tmp/localstack_install_dir
-
-# Install the latest version of awslocal globally
-RUN pip3 install --upgrade awscli awscli-local requests
-
-# Add the code in the last step
-# Also adds the results of `make init` to the container.
-# `make init` _needs_ to be executed before building this docker image (since the execution needs docker itself).
-ADD localstack/ localstack/
-
-# Download some more dependencies (make init needs the LocalStack code)
-# FIXME the init python code should be independent (i.e. not depend on the localstack code), idempotent/reproducible,
-#       modify only folders outside of the localstack package folder, and executed in the builder stage.
-RUN make init
-
-# Install the latest version of localstack-ext and generate the plugin entrypoints.
-# If this is a pre-release build, also include dev releases of these packages.
-ARG LOCALSTACK_PRE_RELEASE=1
-RUN (PIP_ARGS=$([[ "$LOCALSTACK_PRE_RELEASE" == "1" ]] && echo "--pre" || true); \
+    ln -s `pwd` /tmp/localstack_install_dir && \
+    # Install the latest version of awslocal globally
+    pip3 install --upgrade awscli awscli-local requests && \
+    # `make init` _needs_ to be executed before building this docker image (since the execution needs docker itself).
+    # Download some more dependencies (make init needs the LocalStack code)
+    # FIXME the init python code should be independent (i.e. not depend on the localstack code), idempotent/reproducible,
+    #       modify only folders outside of the localstack package folder, and executed in the builder stage.
+    make init && \
+    # Install the latest version of localstack-ext and generate the plugin entrypoints.
+    # If this is a pre-release build, also include dev releases of these packages.
+    (PIP_ARGS=$([[ "$LOCALSTACK_PRE_RELEASE" == "1" ]] && echo "--pre" || true); \
       virtualenv .venv && source .venv/bin/activate && \
-      pip3 install --upgrade ${PIP_ARGS} localstack-ext plux)
-RUN make entrypoints
+    pip3 install --upgrade ${PIP_ARGS} localstack-ext plux) && \
+    make entrypoints
 
 # Add the build date and git hash at last (changes everytime)
 ARG LOCALSTACK_BUILD_DATE
