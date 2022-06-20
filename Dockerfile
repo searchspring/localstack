@@ -204,7 +204,7 @@ RUN TARGETARCH_SYNONYM=$([[ "$TARGETARCH" == "amd64" ]] && echo "x86_64" || echo
 
 
 # light: Stage which produces a final working localstack image (which does not contain some additional infrastructure like eleasticsearch - see "full" stage)
-FROM base-${IMAGE_TYPE}
+FROM base-${IMAGE_TYPE} as flatten
 
 # Copy the build dependencies
 COPY --from=builder /opt/code/localstack/ /opt/code/localstack/
@@ -239,7 +239,18 @@ RUN mkdir -p /tmp/localstack && \
     (PIP_ARGS=$([[ "$LOCALSTACK_PRE_RELEASE" == "1" ]] && echo "--pre" || true); \
       virtualenv .venv && source .venv/bin/activate && \
     pip3 install --upgrade ${PIP_ARGS} localstack-ext plux) && \
-    make entrypoints
+    make entrypoints && \
+    apt-get remove -y \
+      gcc \
+      g++ \
+      git \
+      make && \
+    apt-get clean -y && \
+    apt-get autoremove -y
+
+#-----------------------
+FROM scratch as target
+COPY --from=flatten / /
 
 # Add the build date and git hash at last (changes everytime)
 ARG LOCALSTACK_BUILD_DATE \
