@@ -1,4 +1,4 @@
-ARG IMAGE_TYPE=full
+ARG IMAGE_TYPE=light
 
 # java-builder: Stage to build a custom JRE (with jlink)
 FROM python:3.10.5-slim-buster@sha256:807f16dc51eb1ce7ed1178d82ebb60a41ad67fe74840a0bf6bf502368d4bdd47 as java-builder
