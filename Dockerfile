@@ -239,11 +239,13 @@ RUN mkdir -p /tmp/localstack && \
     (PIP_ARGS=$([[ "$LOCALSTACK_PRE_RELEASE" == "1" ]] && echo "--pre" || true); \
       virtualenv .venv && source .venv/bin/activate && \
     pip3 install --upgrade ${PIP_ARGS} localstack-ext plux) && \
+    pip3 uninstall pip3 && \
     make entrypoints && \
     apt-get remove -y \
       gcc \
       g++ \
       git \
+      groff-base \
       make && \
     apt-get clean -y && \
     apt-get autoremove -y
